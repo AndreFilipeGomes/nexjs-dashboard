@@ -1,4 +1,4 @@
-import { sql } from '@vercel/postgres';
+import { db } from '@vercel/postgres';
 import {
   CustomerField,
   CustomersTableType,
@@ -11,13 +11,20 @@ import { formatCurrency } from './utils';
 
 export async function fetchRevenue() {
   try {
+    // We need to implement like this when using supabase bd 
+    // Neon has an HTTP API, Supabase also has an HTTP API but it's different, 
+    // so if you're using Supabase in this particular tutorial you need to 
+    // revert to establishing a database connection first, which will allow 
+    // your app to connect to and query Supabase.
+
+    const client = await db.connect();
+
     // Artificially delay a response for demo purposes.
     // Don't do this in production :)
-
     // console.log('Fetching revenue data...');
     // await new Promise((resolve) => setTimeout(resolve, 3000));
 
-    const data = await sql<Revenue>`SELECT * FROM revenue`;
+    const data = await client.sql<Revenue>`SELECT * FROM revenue`;
 
     // console.log('Data fetch completed after 3 seconds.');
 
@@ -37,7 +44,7 @@ export async function fetchLatestInvoices() {
       ORDER BY invoices.date DESC
       LIMIT 5`;
 
-    const latestInvoices = data.rows.map((invoice) => ({
+    const latestInvoices = data.rows.map((invoice: any) => ({
       ...invoice,
       amount: formatCurrency(invoice.amount),
     }));
@@ -152,7 +159,7 @@ export async function fetchInvoiceById(id: string) {
       WHERE invoices.id = ${id};
     `;
 
-    const invoice = data.rows.map((invoice) => ({
+    const invoice = data.rows.map((invoice: any) => ({
       ...invoice,
       // Convert amount from cents to dollars
       amount: invoice.amount / 100,
@@ -203,7 +210,7 @@ export async function fetchFilteredCustomers(query: string) {
 		ORDER BY customers.name ASC
 	  `;
 
-    const customers = data.rows.map((customer) => ({
+    const customers = data.rows.map((customer: any) => ({
       ...customer,
       total_pending: formatCurrency(customer.total_pending),
       total_paid: formatCurrency(customer.total_paid),
