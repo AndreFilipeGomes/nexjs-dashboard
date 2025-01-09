@@ -11,9 +11,9 @@ import { Revenue } from "@/app/lib/definitions";
 
 export default async function RevenueChart({
   revenue,
-}: {
+}: Readonly<{
   revenue: Revenue[];
-}) {
+}>) {
   const chartHeight = 350;
   // NOTE: Uncomment this code in Chapter 7
 
