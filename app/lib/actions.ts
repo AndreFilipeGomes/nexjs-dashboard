@@ -32,10 +32,17 @@ export async function createInvoice(formData: FormData) {
   // (better explanation in app/lib/data.ts)
   const client = await db.connect();
 
-  await client.sql`
+  try {
+    await client.sql`
     INSERT INTO invoices (customer_id, amount, status, date)
     VALUES (${customerId}, ${amountInCents}, ${status}, ${date})
   `;
+  } catch (err) {
+    console.log("createInvoice err", err);
+    return {
+      message: "Database Error: Failed to Create Invoice.",
+    };
+  }
 
   // Clear invoice chached data and trigger new request
   revalidatePath("/dashboard/invoices");
@@ -52,11 +59,16 @@ export async function updateInvoice(id: string, formData: FormData) {
 
   const amountInCents = amount * 100;
 
-  await client.sql`
+  try {
+    await client.sql`
     UPDATE invoices
     SET customer_id = ${customerId}, amount = ${amountInCents}, status = ${status}
     WHERE id = ${id}
   `;
+  } catch (err) {
+    console.log("updateInvoice err", err);
+    return { message: "Database Error: Failed to Update Invoice." };
+  }
 
   revalidatePath("/dashboard/invoices");
   redirect("/dashboard/invoices");
@@ -65,14 +77,21 @@ export async function updateInvoice(id: string, formData: FormData) {
 export async function deleteInvoice(id: string) {
   const client = await db.connect();
 
-  await client.sql`
+  try {
+    await client.sql`
     DELETE FROM invoices
     WHERE id = ${id}
   `;
 
-  // We only need to call realidate because this
-  // action is done inside invoice page
-  // meaning we just need to clear cache and
-  // refetch data, no redirection needed
-  revalidatePath("/dashboard/invoices");
+    // We only need to call realidate because this
+    // action is done inside invoice page
+    // meaning we just need to clear cache and
+    // refetch data, no redirection needed
+    revalidatePath("/dashboard/invoices");
+
+    return { message: "Deleted Invoice." };
+  } catch (err) {
+    console.log("deleteInvoice err", err);
+    return { message: "Database Error: Failed to Delete Invoice." };
+  }
 }
