@@ -119,9 +119,7 @@ export async function deleteInvoice(id: string) {
     // meaning we just need to clear cache and
     // refetch data, no redirection needed
     revalidatePath("/dashboard/invoices");
-
-    return { message: "Deleted Invoice." };
-  } catch (_error) {
-    return { message: "Failed to Delete Invoice." };
+  } catch (error) {
+    throw error;
   }
 }
