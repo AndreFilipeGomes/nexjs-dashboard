@@ -1,8 +1,11 @@
 "use server";
+
 import { z } from "zod";
 import { db } from "@vercel/postgres";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { signIn } from "@/auth";
+import { AuthError } from "next-auth";
 
 // We are uing a type validation library to validate form data
 // before using it for storing on the database
@@ -121,5 +124,30 @@ export async function deleteInvoice(id: string) {
     revalidatePath("/dashboard/invoices");
   } catch (error) {
     throw error;
+  }
+}
+
+export async function authenticate(
+  prevState: string | undefined,
+  formData: FormData
+) {
+  let errorOccurred = false;
+  try {
+    const signInStatus = await signIn("credentials", formData);
+    console.log("signInStatus", signInStatus);
+  } catch (error) {
+    if (error instanceof AuthError) {
+      errorOccurred = true;
+      switch (error.type) {
+        case "CredentialsSignin":
+          return "Invalid credentials.";
+        default:
+          return "Something went wrong.";
+      }
+    }
+  } finally {
+    if (!errorOccurred) {
+      redirect("/dashboard");
+    }
   }
 }
